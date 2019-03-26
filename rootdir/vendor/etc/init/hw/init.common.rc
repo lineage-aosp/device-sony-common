@@ -13,12 +13,12 @@
 # limitations under the License.
 
 on charger
-    start rmt_storage
-    start mlog_qmi_service
-    start irsc_util
+    start vendor.rmt_storage
+    start vendor.mlog_qmi_service
+    start vendor.irsc_util
 
 # Offline charger
-service charger /charger
+service vendor.charger /charger
     class charger
     group root system log
     critical
@@ -34,7 +34,7 @@ on init
 
     # qseecomd needs /dev/block/bootdevice
     # vold needs keymaster that needs qseecomd
-    start qseecomd
+    start vendor.qseecomd
 
     # Enable subsystem restart
     write /sys/module/subsystem_restart/parameters/enable_ramdumps 0
@@ -94,7 +94,7 @@ on fs
     restorecon_recursive /mnt/vendor/persist
 
 on post-fs
-    # Wait qseecomd started
+    # Wait for qseecomd to be started
     wait_for_prop vendor.sys.listeners.registered true
 
 on late-fs
@@ -342,10 +342,14 @@ on boot
     setrlimit 4 -1 -1
     write /proc/sys/kernel/dmesg_restrict 0
 
+# Set vendor-ril lib path based on Meta version
+on property:vendor.rild.libpath=*
+    setprop rild.libpath ${vendor.rild.libpath}
+
 on property:sys.boot_completed=1
     # Enable ZRAM on boot_complete
     swapon_all /vendor/etc/fstab.${ro.hardware}
-    write /proc/sys/vm/swappiness 100
+    write /proc/sys/vm/swappiness 25
 
 on property:vendor.sys.listeners.registered=true
     # load IPA FWs
